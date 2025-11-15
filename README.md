@@ -41,12 +41,24 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 2. **Install dependencies**:
 ```bash
+# Create virtual environment
+uv venv
+
+# Activate virtual environment
+source .venv/bin/activate  # On Linux/Mac
+# or
+.venv\Scripts\activate  # On Windows
+
+# Install dependencies
 uv pip install -r pyproject.toml
 uv pip install -e ".[dev]"
 ```
 
 3. **Run the application**:
 ```bash
+# Make sure virtual environment is activated
+source .venv/bin/activate
+
 # Development mode
 FLASK_ENV=development python wsgi.py
 
@@ -56,6 +68,7 @@ FLASK_APP=wsgi:app flask run --host=0.0.0.0 --port=8080
 
 4. **Run tests**:
 ```bash
+# With virtual environment activated
 pytest
 ```
 
@@ -124,6 +137,10 @@ export FLASK_ENV=production
 
 Run the test suite with coverage:
 ```bash
+# Activate virtual environment first
+source .venv/bin/activate
+
+# Run tests
 pytest --cov=app --cov-report=html
 ```
 

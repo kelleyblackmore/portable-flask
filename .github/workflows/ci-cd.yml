@@ -26,24 +26,33 @@ jobs:
 
     - name: Install dependencies
       run: |
-        uv pip install --system -r pyproject.toml
-        uv pip install --system -e ".[dev]"
+        uv venv
+        . .venv/bin/activate
+        uv pip install -r pyproject.toml
+        uv pip install -e ".[dev]"
 
     - name: Lint with flake8
       run: |
+        . .venv/bin/activate
         # Stop the build if there are Python syntax errors or undefined names
         flake8 app config --count --select=E9,F63,F7,F82 --show-source --statistics
         # Exit-zero treats all errors as warnings
         flake8 app config --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
 
     - name: Format check with black
-      run: black --check app config tests
+      run: |
+        . .venv/bin/activate
+        black --check app config tests
 
     - name: Type check with mypy
-      run: mypy app config || true
+      run: |
+        . .venv/bin/activate
+        mypy app config || true
 
     - name: Test with pytest
-      run: pytest
+      run: |
+        . .venv/bin/activate
+        pytest
 
   docker:
     runs-on: ubuntu-latest
