@@ -1,20 +1,49 @@
-# Use an official Python runtime as a parent image
-FROM python:2.7-slim
+# Multi-stage build for production Flask application with UV
+FROM python:3.12-slim as builder
 
-# Set the working directory to /app
+# Install UV
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+# Set working directory
 WORKDIR /app
 
-# Copy the current directory contents into the container at /app
-ADD . /app
+# Copy dependency files
+COPY pyproject.toml ./
 
-# Install any needed packages specified in requirements.txt
-RUN pip install --trusted-host pypi.python.org -r requirements.txt
+# Install dependencies using UV
+RUN uv pip install --system --no-cache -r pyproject.toml
 
-# Make port 80 available to the world outside this container
-EXPOSE 80
+# Production stage
+FROM python:3.12-slim
 
-# Define environment variable
-ENV NAME World
+# Create non-root user for security
+RUN useradd -m -u 1000 appuser
 
-# Run app.py when the container launches
-CMD ["python", "app.py"]
+# Set working directory
+WORKDIR /app
+
+# Copy installed packages from builder
+COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+# Copy application code
+COPY --chown=appuser:appuser app ./app
+COPY --chown=appuser:appuser config ./config
+COPY --chown=appuser:appuser wsgi.py ./
+
+# Switch to non-root user
+USER appuser
+
+# Expose port
+EXPOSE 8080
+
+# Set environment variables
+ENV FLASK_ENV=production
+ENV PYTHONUNBUFFERED=1
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')" || exit 1
+
+# Run with gunicorn for production
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "4", "--threads", "2", "--timeout", "60", "--access-logfile", "-", "--error-logfile", "-", "wsgi:app"]
