@@ -1,4 +1,5 @@
 """Initialize the Flask application with configuration."""
+
 from flask import Flask
 from config.settings import config
 import os

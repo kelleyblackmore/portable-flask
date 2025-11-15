@@ -1,4 +1,5 @@
 """Main routes for the application."""
+
 from flask import Blueprint, jsonify
 import socket
 import os

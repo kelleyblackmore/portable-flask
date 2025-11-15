@@ -1,4 +1,5 @@
 """Configuration settings for the Flask application."""
+
 import os
 from typing import Any
 

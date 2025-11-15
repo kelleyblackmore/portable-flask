@@ -1,4 +1,5 @@
 """Tests for the main routes."""
+
 import pytest
 from app import create_app
 
